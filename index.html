@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Release Notes</title>
+    <title>CEABS - Release Notes</title>
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap"
       rel="stylesheet"
@@ -69,8 +69,8 @@
         flex-wrap: wrap;
       }
       .logo-box {
-        width: 38px;
-        height: 38px;
+        width: 40px;
+        height: 40px;
         border-radius: 9px;
         background: linear-gradient(135deg, var(--accent), var(--accent2));
         display: flex;
@@ -85,7 +85,8 @@
       .logo-box img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
+        object-position: center;
       }
       .topbar-title {
         font-size: 16px;
@@ -1036,13 +1037,26 @@
       ${data.products
         .map(
           (p, pi) => `
-        <div class="prod-row">
+        <div class="prod-row"
+             draggable="true"
+             ondragstart="dragStart(event, ${pi})"
+             ondragover="dragOver(event)"
+             ondrop="dropProduct(event, ${pi})">
+
           <div style="flex:1">
-            <input type="text" value="${esc(p.name)}" style="background:transparent;border:none;font-size:13px;font-weight:700;color:var(--text);padding:0;width:100%"
-              oninput="data.products[${pi}].name=this.value;renderProdSel();autosave()">
-            <div class="prod-id">id: ${esc(p.id)}</div>
+            <input type="text" 
+                   value="${esc(p.name)}" 
+                   style="background:transparent;border:none;font-size:13px;font-weight:700;color:var(--text);padding:0;width:100%"
+                   oninput="data.products[${pi}].name=this.value;renderProdSel();autosave()">
+
+            
           </div>
-          ${data.products.length > 1 ? `<button class="btn btn-danger btn-sm" onclick="removeProduct(${pi})">✕</button>` : ''}
+
+          ${
+            data.products.length > 1
+              ? `<button class="btn btn-danger btn-sm" onclick="removeProduct(${pi})">✕</button>`
+              : ''
+          }
         </div>`
         )
         .join('')}
@@ -1198,6 +1212,7 @@
           }
         );
       }
+
       function addVersion() {
         const prod = data.products[curProdIdx];
         prod.versions.unshift({
@@ -1256,7 +1271,36 @@
           }
         );
       }
+      let draggedProductIndex = null;
 
+      function dragStart(event, index) {
+        draggedProductIndex = index;
+      }
+
+      function dragOver(event) {
+        event.preventDefault();
+      }
+
+      function dropProduct(event, targetIndex) {
+        event.preventDefault();
+
+        if (draggedProductIndex === null) return;
+
+        const draggedItem = data.products[draggedProductIndex];
+
+        data.products.splice(draggedProductIndex, 1);
+
+        data.products.splice(targetIndex, 0, draggedItem);
+
+        curProdIdx = targetIndex;
+
+        save(false);
+        renderProdSel();
+        renderSidebar();
+        renderMain();
+
+        draggedProductIndex = null;
+      }
       function today() {
         const d = new Date();
         return [
